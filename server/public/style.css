@@ -1,0 +1,352 @@
+/* Tartan Radio Custom Styles - Deep Green Dark Theme */
+
+:root {
+    --primary-color: #00a711;      /* Company Green */
+    --primary-dark: #005a09;       /* Darker Company Green */
+    --primary-light: #20c231;      /* Lighter Company Green */
+    --background-dark: #0a140a;    /* Darkest green-black background */
+    --card-dark: #142814;          /* Dark green card background */
+    --secondary-dark: #1c351c;     /* UI element background */
+    --text-light: #e0f2e0;         /* Main light green text */
+    --text-muted: #a0c0a0;         /* Muted green text */
+    --accent-blue-light: #00adfd;  /* Keep sky blue for contrast */
+    --accent-blue-dark: #0077c4;   /* Keep ocean blue for contrast */
+    --text-on-primary: #ffffff;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-dark);
+}
+
+body {
+    color: var(--text-light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+}
+
+.section {
+    padding: 2rem 1.5rem;
+}
+
+.box {
+    background-color: var(--card-dark);
+    color: var(--text-light);
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--secondary-dark);
+    border-top: 4px solid var(--primary-color);
+}
+
+.title {
+    color: var(--primary-color) !important;
+    font-weight: 700;
+}
+
+.subtitle {
+    color: var(--text-muted) !important;
+}
+
+.table {
+    background-color: transparent;
+    color: var(--text-light);
+}
+
+.table.is-hoverable tbody tr:hover {
+    background-color: var(--secondary-dark);
+}
+
+.table th {
+    background-color: var(--secondary-dark);
+    color: var(--primary-color) !important;
+    border-bottom: 2px solid var(--primary-color) !important;
+}
+
+.table td {
+    border-color: var(--secondary-dark);
+    color: #a0c0a0;
+}
+
+strong {
+    color: #a0c0a0 !important;
+}
+
+/* Bulma Overrides */
+.navbar.is-dark {
+    background-color: var(--card-dark) !important;
+    border-bottom: 1px solid var(--primary-dark);
+}
+
+.navbar-item, .navbar-link {
+    color: var(--text-muted) !important;
+}
+
+.navbar-item:hover, .navbar-item.is-active {
+    background-color: var(--secondary-dark) !important;
+    color: var(--primary-color) !important;
+}
+
+.button.is-primary {
+    background-color: var(--primary-color) !important;
+    color: var(--text-on-primary) !important;
+    border-color: transparent !important;
+}
+
+.button.is-primary:hover {
+    background-color: var(--primary-light) !important;
+}
+
+.button.is-link {
+    background-color: var(--accent-blue-dark) !important;
+    color: #ffffff !important;
+}
+
+.button.is-info {
+    background-color: var(--accent-blue-light) !important;
+    color: #ffffff !important;
+}
+
+.button.is-warning {
+    background-color: #ffdd57 !important;
+    color: #3f4a3c !important;
+}
+
+.button.is-danger {
+    background-color: #ff3860 !important;
+    color: #ffffff !important;
+}
+
+.button.is-danger.is-outlined {
+    color: #ffffff !important;
+    background-color: transparent !important;
+    border-color: #ff3860 !important;
+}
+
+.button.is-danger.is-outlined:hover {
+    background-color: #ff3860 !important;
+    color: #ffffff !important;
+}
+
+.tag.is-info {
+    background-color: var(--accent-blue-light) !important;
+    color: #ffffff !important;
+}
+
+.tag.is-success {
+    background-color: var(--primary-color) !important;
+    color: var(--text-on-primary) !important;
+}
+
+.tag.is-warning {
+    background-color: #ffdd57 !important;
+    color: #3f4a3c !important;
+}
+
+.tag.is-danger {
+    background-color: #ff3860 !important;
+    color: #ffffff !important;
+}
+
+.tag.is-light {
+    background-color: var(--secondary-dark) !important;
+    color: var(--primary-color) !important;
+}
+
+.tag.is-grey {
+    background-color: var(--secondary-dark);
+    color: var(--text-muted);
+}
+
+.input, .select select, .textarea {
+    background-color: var(--background-dark) !important;
+    border-color: var(--secondary-dark) !important;
+    color: var(--text-light) !important;
+}
+
+.input:focus, .select select:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.125em rgba(0, 167, 17, 0.25) !important;
+}
+
+.label {
+    color: var(--text-muted) !important;
+}
+
+/* Playlist & Menu Styles */
+.menu-list a {
+    color: var(--text-muted) !important;
+}
+
+.menu-list a.is-active {
+    background-color: var(--primary-color) !important;
+    color: var(--text-on-primary) !important;
+}
+
+.menu-list a:hover {
+    background-color: var(--secondary-dark) !important;
+    color: var(--primary-color) !important;
+}
+
+.tabs.is-toggle li a {
+    background-color: var(--secondary-dark);
+    border-color: var(--primary-dark);
+    color: var(--text-muted);
+}
+
+.tabs.is-toggle li.is-active a {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: var(--text-on-primary) !important;
+}
+
+.playlist-item:hover { 
+    background: var(--secondary-dark); 
+}
+
+.playlist-item.is-active { 
+    background: var(--secondary-dark); 
+    border-left: 4px solid var(--primary-color); 
+}
+
+/* Modal Overrides */
+.modal-card-head, .modal-card-foot {
+    background-color: var(--secondary-dark) !important;
+    border-color: var(--primary-dark) !important;
+}
+
+.modal-card-title {
+    color: var(--primary-color) !important;
+}
+
+.modal-card-body {
+    background-color: var(--card-dark) !important;
+    color: var(--text-light) !important;
+}
+
+/* Notification & Other Bulma Overrides */
+.notification.is-info {
+    background-color: var(--accent-blue-light) !important;
+    color: #ffffff !important;
+}
+
+.notification.is-success {
+    background-color: var(--primary-color) !important;
+    color: var(--text-on-primary) !important;
+}
+
+.notification.is-light {
+    background-color: var(--secondary-dark) !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--primary-dark);
+}
+
+.footer-contact {
+    margin-top: 3rem;
+    padding: 3rem 1.5rem;
+    background-color: #050a05;
+    border-top: 5px solid var(--primary-color);
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.footer-contact strong {
+    color: var(--primary-color) !important;
+}
+
+.footer-contact a {
+    color: var(--accent-blue-light);
+    text-decoration: underline;
+}
+
+.footer-contact a:hover {
+    color: var(--primary-color);
+}
+
+/* Mobile Responsiveness */
+@media screen and (max-width: 768px) {
+    .section {
+        padding: 1rem 0.75rem;
+    }
+    .container {
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+    }
+    .box {
+        padding: 1.25rem 1rem;
+        margin-bottom: 1rem;
+        border-radius: 6px;
+    }
+    .title {
+        font-size: 1.5rem !important;
+        margin-bottom: 1.25rem !important;
+    }
+    .subtitle {
+        font-size: 1.1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    .navbar-brand {
+        padding-left: 0.5rem;
+    }
+    /* Ensure navbar menu uses theme colors on mobile */
+    .navbar-menu {
+        background-color: var(--card-dark) !important;
+        border-bottom: 2px solid var(--primary-dark);
+        padding: 0.5rem;
+    }
+    .navbar-item {
+        color: var(--text-light) !important;
+        border-bottom: 1px solid var(--secondary-dark);
+        padding: 1rem;
+    }
+    .navbar-item:hover {
+        background-color: var(--secondary-dark) !important;
+        color: var(--primary-color) !important;
+    }
+    
+    .navbar-burger {
+        color: var(--primary-color) !important;
+    }
+    
+    /* Table Responsive Tweak */
+    .table-container {
+        margin-bottom: 1rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .table {
+        font-size: 0.9rem;
+    }
+    .table td, .table th {
+        padding: 0.75rem 0.5rem;
+    }
+
+    /* Button Touch Optimization */
+    .button {
+        height: 2.75rem;
+    }
+    .buttons .button {
+        margin-bottom: 0.5rem !important;
+    }
+    .is-fullwidth-mobile {
+        width: 100% !important;
+        display: flex !important;
+    }
+
+    /* Form Elements */
+    .input, .select select, .select {
+        height: 2.75rem !important;
+        width: 100% !important;
+    }
+    .field.has-addons {
+        flex-direction: column;
+    }
+    .field.has-addons .control, 
+    .field.has-addons .control .button,
+    .field.has-addons .control .input {
+        width: 100% !important;
+        border-radius: 4px !important;
+        margin-bottom: 0.25rem;
+    }
+}

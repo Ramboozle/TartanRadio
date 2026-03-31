@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Song Reports - Tartan Radio</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar is-dark">
+            <div class="container">
+                <div class="navbar-brand">
+                    <a class="navbar-item" href="/">
+                        <img src="/DMK-logo.png" style="max-height: 40px; margin-right: 10px;">
+                        <strong>Tartan Radio</strong>
+                        <span class="tag is-info ml-2">v2.0</span>
+                    </a>
+                    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                    </a>
+                </div>
+                <div id="navbarMenu" class="navbar-menu">
+                    <div class="navbar-end">
+                        <a class="navbar-item" href="/">Home</a>
+                        <a class="navbar-item" href="/admin.html">Admin Controls</a>
+                        <a class="navbar-item" href="/playlists.html">Playlists</a>
+                        <a class="navbar-item" href="/reports.html">Song Reports</a>
+                        <a class="navbar-item" href="/schedule.html">Schedule</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+                <div class="container mt-5">
+                    <section class="section">
+                <h1 class="title">Song Reports</h1>
+                <div class="box">
+                <div v-if="reports.length === 0" class="notification is-light">
+                    No songs reported. Everything looks good!
+                </div>
+                <div class="table-container" v-else>
+                    <table class="table is-fullwidth is-hoverable">
+                        <thead>
+                            <tr>
+                                <th>Song Name</th>
+                                <th>Reason</th>
+                                <th>Reported By</th>
+                                <th>Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="report in reports" :key="report.id">
+                                <td><strong>{{ formatSongName(report.song_name) }}</strong></td>
+                                <td>
+                                    <span v-if="report.reason === 'bad'" class="tag is-warning">Bad Song</span>
+                                    <span v-else class="tag is-danger">Faulty</span>
+                                </td>
+                                <td>{{ report.hostname }}</td>
+                                <td>{{ new Date(report.reported_at).toLocaleString() }}</td>
+                                <td>
+                                    <div class="buttons are-small">
+                                        <button class="button is-warning" @click="dismissReport(report.id)">Ignore</button>
+                                        <button class="button is-danger" @click="removeFile(report.song_name)">Remove from Playlist</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        </div>
+
+        <footer class="footer-contact">
+            <div class="container">
+                <p><strong>Contact Support:</strong> Oliver Nield | <a href="mailto:oliver.nield@dmkeith.com">oliver.nield@dmkeith.com</a> | Extension: 2096</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() { return { reports: [] } },
+            mounted() { this.fetchReports(); },
+            methods: {
+                formatSongName(name) {
+                    if (!name || name === 'None') return name;
+                    return name.replace(/_/g, ' ').replace(/\.mp3$/i, '');
+                },
+                async fetchReports() {
+                    const res = await axios.get('/api/reports');
+                    this.reports = res.data;
+                },
+                async dismissReport(id) {
+                    await axios.delete(`/api/reports/${id}`);
+                    this.fetchReports();
+                },
+                async removeFile(songName) {
+                    if (!confirm('Are you sure? This will permanently delete the file "' + this.formatSongName(songName) + '" from the server.')) return;
+                    try {
+                        await axios.post('/api/reports/remove-file', { song_name: songName });
+                        alert('File deleted and reports dismissed.');
+                        this.fetchReports();
+                    } catch (e) { alert('Failed to delete file. It might have been moved or already deleted.'); }
+                }
+            }
+        }).mount('#app');
+
+        // Burger menu toggle
+        document.addEventListener('DOMContentLoaded', () => {
+            const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+            $navbarBurgers.forEach( el => {
+                el.addEventListener('click', () => {
+                    const target = el.dataset.target;
+                    const $target = document.getElementById(target);
+                    el.classList.toggle('is-active');
+                    $target.classList.toggle('is-active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

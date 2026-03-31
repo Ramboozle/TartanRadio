@@ -1,0 +1,12 @@
+{
+  "name": "tartan-radio-listener",
+  "version": "1.0.0",
+  "description": "A nodejs script to stream audio from a remote arecord via SSH to ffplay",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "ssh2": "^1.15.0"
+  }
+}
