@@ -1,0 +1,45 @@
+name: Create Release Assets
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers when you push a tag like v2.1, v2.2, etc.
+  workflow_dispatch: # Allows you to run this manually from the Actions tab
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create ZIP Packages
+        run: |
+          # Create a directory for assets
+          mkdir -p dist
+          
+          # Package the Server (excluding db, logs, and node_modules)
+          zip -r dist/TartanRadio-Server.zip server/ -x "server/node_modules/*" "server/*.log" "server/*.old" "server/radio.db"
+          
+          # Package the Client
+          zip -r dist/TartanRadio-Client.zip newclient/ -x "newclient/node_modules/*" "newclient/*.log" "newclient/*.old" "newclient/config.json"
+          
+          # Package the Listener
+          zip -r dist/TartanRadio-Listener.zip listner/ -x "listner/node_modules/*" "listner/*.log" "listner/*.old"
+          
+          # Package the Documentation & Config Guide
+          zip -r dist/TartanRadio-Docs.zip Docs/ README.md CONFIGURATION.md
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist/TartanRadio-Server.zip
+            dist/TartanRadio-Client.zip
+            dist/TartanRadio-Listener.zip
+            dist/TartanRadio-Docs.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
