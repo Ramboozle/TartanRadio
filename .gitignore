@@ -16,3 +16,6 @@ Thumbs.db
 
 # Media files
 music/
+
+# Archives
+*.zip
