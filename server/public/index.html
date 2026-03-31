@@ -15,7 +15,7 @@
                     <a class="navbar-item" href="/">
                         <img src="/DMK-logo.png" style="max-height: 40px; margin-right: 10px;">
                         <strong>Tartan Radio</strong>
-                        <span class="tag is-info ml-2">v2.0</span>
+                        <span class="tag is-info ml-2">v2.1</span>
                     </a>
                     <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
                         <span aria-hidden="true"></span>
@@ -29,7 +29,7 @@
                         <a class="navbar-item" href="/admin.html">Admin Controls</a>
                         <a class="navbar-item" href="/playlists.html">Playlists</a>
                         <a class="navbar-item" href="/reports.html">Song Reports</a>
-                        <a class="navbar-item" href="/schedule.html">Schedule</a>
+                        <a class="navbar-item" href="/groups.html">Groups</a>
                     </div>
                 </div>
             </div>
@@ -44,6 +44,7 @@
                             <tr>
                                 <th>Hostname</th>
                                 <th class="is-hidden-mobile">Status</th>
+                                <th>Offline Since</th>
                                 <th>Now Playing</th>
                                 <th>Actions</th>
                             </tr>
@@ -60,6 +61,10 @@
                                         <span v-else-if="pi.status === 'playing'" class="tag is-success">Online - Playing</span>
                                         <span v-else class="tag is-warning">Online - Stopped</span>
                                     </div>
+                                </td>
+                                <td class="is-size-7">
+                                    <span v-if="!pi.is_online" class="has-text-danger">{{ timeSince(pi.last_ping) }}</span>
+                                    <span v-else class="has-text-grey">-</span>
                                 </td>
                                 <td class="is-size-7">{{ formatSongName(pi.current_song) }}</td>
                                 <td>
@@ -93,6 +98,21 @@
                 formatSongName(name) {
                     if (!name || name === 'None') return name;
                     return name.replace(/_/g, ' ').replace(/\.mp3$/i, '');
+                },
+                timeSince(date) {
+                    if (!date) return 'Never';
+                    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+                    let interval = seconds / 31536000;
+                    if (interval > 1) return Math.floor(interval) + " years";
+                    interval = seconds / 2592000;
+                    if (interval > 1) return Math.floor(interval) + " months";
+                    interval = seconds / 86400;
+                    if (interval > 1) return Math.floor(interval) + " days";
+                    interval = seconds / 3600;
+                    if (interval > 1) return Math.floor(interval) + " hours";
+                    interval = seconds / 60;
+                    if (interval > 1) return Math.floor(interval) + " minutes";
+                    return Math.floor(seconds) + " seconds";
                 },
                 async refreshData() {
                     try {

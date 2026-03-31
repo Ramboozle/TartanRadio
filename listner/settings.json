@@ -1,0 +1,6 @@
+{
+  "REMOTE_PI_IP": "10.0.32.93",
+  "SSH_USERNAME": "pi",
+  "SSH_PASSWORD": "password",
+  "UDP_PORT": 1234
+}

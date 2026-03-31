@@ -4,16 +4,37 @@ const os = require('os');
 const path = require('path');
 const fs = require('fs-extra');
 const express = require('express');
+
+// Initialize file logging
+require('./logger')('client.log');
+
 const { syncFiles, getSyncStatus } = require('./sync');
 const player = require('./player');
 
+// Load external settings
+let settings = {
+  PORT: 3001,
+  SERVER_URL: 'http://music:80',
+  SYNC_INTERVAL_MS: 3600000,
+  HEARTBEAT_INTERVAL_MS: 5000,
+  VERSION: '2.1'
+};
+
+const SETTINGS_PATH = path.join(__dirname, 'settings.json');
+if (fs.existsSync(SETTINGS_PATH)) {
+  try {
+    settings = { ...settings, ...fs.readJsonSync(SETTINGS_PATH) };
+    console.log('[SYSTEM] Loaded custom settings from settings.json');
+  } catch (e) { console.error('[SYSTEM] Failed to parse settings.json, using defaults.'); }
+}
+
 const app = express();
-const SERVER_URL = 'http://music:80';
-const VERSION = '2.0';
+const SERVER_URL = settings.SERVER_URL;
+const VERSION = settings.VERSION;
 const HOSTNAME = os.hostname();
-const PORT = 3001;
-const SYNC_INTERVAL = 3600000; // 1 hour
-const HEARTBEAT_INTERVAL = 5000; // 5 seconds
+const PORT = settings.PORT;
+const SYNC_INTERVAL = settings.SYNC_INTERVAL_MS;
+const HEARTBEAT_INTERVAL = settings.HEARTBEAT_INTERVAL_MS;
 const CONFIG_PATH = path.join(__dirname, 'config.json');
 
 let socket = null;
@@ -701,6 +722,8 @@ async function startClient() {
   setInterval(syncFiles, SYNC_INTERVAL);
 }
 
+let playbackHistory = [];
+
 async function startPlayback() {
   if (isLooping) return;
   isLooping = true;
@@ -709,6 +732,31 @@ async function startPlayback() {
     if (player.getStatus() === 'playing') {
       await new Promise(resolve => setTimeout(resolve, 1000));
       continue;
+    }
+
+    // Bug Workaround: Check for rapid playback error
+    const now = Date.now();
+    playbackHistory.push(now);
+    // Keep only the last 5 attempts
+    if (playbackHistory.length > 5) playbackHistory.shift();
+
+    if (playbackHistory.length === 5) {
+      const fiveSongsTime = playbackHistory[4] - playbackHistory[0];
+      if (fiveSongsTime < 5000) {
+        console.error(`[SYSTEM] Rapid playback error detected (5 songs in ${fiveSongsTime}ms). Resetting playback...`);
+        isLooping = false;
+        player.stop();
+        playbackHistory = [];
+        
+        // Wait 10 seconds and try again if we should still be playing
+        setTimeout(() => {
+          if (shouldPlay) {
+            console.log('[SYSTEM] Attempting to resume playback after error reset...');
+            startPlayback();
+          }
+        }, 10000);
+        return;
+      }
     }
 
     let filePath;

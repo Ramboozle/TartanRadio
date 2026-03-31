@@ -15,7 +15,7 @@
                     <a class="navbar-item" href="/">
                         <img src="/DMK-logo.png" style="max-height: 40px; margin-right: 10px;">
                         <strong>Tartan Radio</strong>
-                        <span class="tag is-info ml-2">v2.0</span>
+                        <span class="tag is-info ml-2">v2.1</span>
                     </a>
                     <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
                         <span aria-hidden="true"></span>
@@ -29,7 +29,7 @@
                         <a class="navbar-item" href="/admin.html">Admin Controls</a>
                         <a class="navbar-item" href="/playlists.html">Playlists</a>
                         <a class="navbar-item" href="/reports.html">Song Reports</a>
-                        <a class="navbar-item" href="/schedule.html">Schedule</a>
+                        <a class="navbar-item" href="/groups.html">Groups</a>
                     </div>
                 </div>
             </div>
@@ -139,6 +139,7 @@
                             <tr>
                                 <th>Hostname</th>
                                 <th class="is-hidden-mobile">Status</th>
+                                <th>Offline Since</th>
                                 <th>Now Playing</th>
                                 <th>Actions</th>
                             </tr>
@@ -156,6 +157,10 @@
                                         <span v-else class="tag is-warning">Online - Stopped</span>
                                     </div>
                                 </td>
+                                <td class="is-size-7">
+                                    <span v-if="!pi.is_online" class="has-text-danger">{{ timeSince(pi.last_ping) }}</span>
+                                    <span v-else class="has-text-grey">-</span>
+                                </td>
                                 <td class="is-size-7">{{ formatSongName(pi.current_song) }}</td>
                                 <td>
                                     <div class="buttons are-small">
@@ -169,65 +174,6 @@
                             </tr>
                         </tbody>
                     </table>
-                </div>
-            </div>
-
-            <div class="columns">
-                <div class="column is-12">
-            <div class="level mb-4">
-                <div class="level-left">
-                    <h2 class="subtitle mb-0">Groups Management</h2>
-                </div>
-                <div class="level-right">
-                    <div class="field has-addons">
-                        <div class="control">
-                            <input class="input is-small" type="text" v-model="newGroupName" placeholder="New Group Name">
-                        </div>
-                        <div class="control">
-                            <button class="button is-small is-link" @click="addGroup">Create Group</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="columns is-multiline">
-                <div v-for="group in groups" :key="group.id" class="column is-4">
-                    <div class="box p-3" style="height: 100%; display: flex; flex-direction: column;">
-                        <div class="level is-mobile mb-2">
-                            <div class="level-left">
-                                <h3 class="title is-6 mb-0">{{ group.name }}</h3>
-                            </div>
-                            <div class="level-right">
-                                <button class="delete is-small" @click="deleteGroup(group.id)"></button>
-                            </div>
-                        </div>
-                        
-                        <div class="content is-small mb-2" style="flex-grow: 1;">
-                            <div class="tags mt-1">
-                                <span v-for="member in group.members" :key="member" class="tag is-info is-light">
-                                    {{ member }}
-                                    <button class="delete is-small" @click="removeFromGroup(member)"></button>
-                                </span>
-                                <span v-if="!group.members || group.members.length === 0" class="is-italic has-text-grey">No members</span>
-                            </div>
-                        </div>
-
-                        <div class="field has-addons">
-                            <div class="control is-expanded">
-                                <div class="select is-small is-fullwidth">
-                                    <select v-model="selectedClientForGroup[group.id]">
-                                        <option value="" disabled selected>Add Pi...</option>
-                                        <option v-for="pi in unassignedClients" :key="pi.hostname" :value="pi.hostname">
-                                            {{ pi.hostname }}
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="control">
-                                <button class="button is-small is-link" @click="addToGroup(group.id)">Add</button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
             </section>
@@ -250,7 +196,6 @@
                     clients: [], 
                     groups: [], 
                     reports: [],
-                    newGroupName: '',
                     selectedClientForGroup: {},
                     playlistOptions: [],
                     advertOptions: [],
@@ -259,11 +204,6 @@
                     globalAdFrequency: 3,
                     globalTarget: 'all'
                 } 
-            },
-            computed: {
-                unassignedClients() {
-                    return this.clients.filter(c => !c.group_id);
-                }
             },
             mounted() { 
                 this.refreshData();
@@ -275,13 +215,27 @@
                     if (!name || name === 'None') return name;
                     return name.replace(/_/g, ' ').replace(/\.mp3$/i, '');
                 },
+                timeSince(date) {
+                    if (!date) return 'Never';
+                    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+                    let interval = seconds / 31536000;
+                    if (interval > 1) return Math.floor(interval) + " years";
+                    interval = seconds / 2592000;
+                    if (interval > 1) return Math.floor(interval) + " months";
+                    interval = seconds / 86400;
+                    if (interval > 1) return Math.floor(interval) + " days";
+                    interval = seconds / 3600;
+                    if (interval > 1) return Math.floor(interval) + " hours";
+                    interval = seconds / 60;
+                    if (interval > 1) return Math.floor(interval) + " minutes";
+                    return Math.floor(seconds) + " seconds";
+                },
                 async fetchOptions() {
                     try {
                         const res = await axios.get('/api/directories');
                         this.playlistOptions = res.data.playlists;
                         this.advertOptions = res.data.adverts;
                         
-                        // Default to first available if 'default' is no longer an option
                         if (this.globalPlaylist === 'default' && this.playlistOptions.length > 0) {
                             this.globalPlaylist = this.playlistOptions[0];
                         }
@@ -299,12 +253,6 @@
                         this.clients = clientsRes.data;
                         this.groups = groupsRes.data;
                         await this.fetchReports();
-                        
-                        this.groups.forEach(g => {
-                            if (this.selectedClientForGroup[g.id] === undefined) {
-                                this.selectedClientForGroup[g.id] = '';
-                            }
-                        });
                     } catch (e) { console.error('Refresh failed', e); }
                 },
                 async fetchReports() {
@@ -327,7 +275,6 @@
                 },
                 async sendCommand(target, type, value = null) {
                     await axios.post('/api/command', { target, type, value });
-                    // Refresh after a short delay to allow the server/Pi to process
                     setTimeout(this.refreshData, 1000);
                 },
                 async executeBroadcast(type) {
@@ -345,7 +292,6 @@
                             frequency: this.globalAdFrequency
                         });
 
-                        // Update database for targeted clients
                         const targetClients = this.globalTarget === 'all' 
                             ? this.clients 
                             : this.clients.filter(c => c.group_id === (this.globalTarget.startsWith('group:') ? parseInt(this.globalTarget.split(':')[1]) : -1));
@@ -361,28 +307,6 @@
                         alert('Settings applied to target.');
                     } catch (e) { alert('Failed to apply settings'); }
                 },
-                async addGroup() {
-                    if (!this.newGroupName) return;
-                    await axios.post('/api/groups', { name: this.newGroupName });
-                    this.newGroupName = '';
-                    this.refreshData();
-                },
-                async deleteGroup(id) {
-                    if (!confirm('Are you sure you want to delete this group? All members will be unassigned.')) return;
-                    await axios.delete(`/api/groups/${id}`);
-                    this.refreshData();
-                },
-                async addToGroup(groupId) {
-                    const hostname = this.selectedClientForGroup[groupId];
-                    if (!hostname) return;
-                    await axios.post('/api/clients/assign-group', { hostname, group_id: groupId });
-                    this.selectedClientForGroup[groupId] = '';
-                    this.refreshData();
-                },
-                async removeFromGroup(hostname) {
-                    await axios.post('/api/clients/assign-group', { hostname, group_id: null });
-                    this.refreshData();
-                },
                 async removeClient(hostname) {
                     if (!confirm(`Are you sure you want to remove ${hostname} from the database? It will reappear if it comes back online.`)) return;
                     try {
@@ -395,7 +319,6 @@
             }
         }).mount('#app');
 
-        // Burger menu toggle
         document.addEventListener('DOMContentLoaded', () => {
             const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
             $navbarBurgers.forEach( el => {

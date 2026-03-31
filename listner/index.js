@@ -2,19 +2,38 @@ const { Client } = require('ssh2');
 const { spawn } = require('child_process');
 const os = require('os');
 
+// Initialize file logging
+require('./logger')('listener.log');
+
 /**
  * "The Instant Stream" - Ultra-Low Latency Raw PCM Listener.
  * Optimized for <30ms delay on Raspbian.
  */
 
-const config = {
-    host: '10.0.32.93',
-    port: 22,
-    username: 'music',
-    password: 'LS101DY22013'
+// Load external settings
+let settings = {
+    REMOTE_PI_IP: '10.0.32.93',
+    SSH_USERNAME: 'music',
+    SSH_PASSWORD: 'password',
+    UDP_PORT: 1234
 };
 
-const UDP_PORT = 1234;
+const SETTINGS_PATH = path.join(__dirname, 'settings.json');
+if (fs.existsSync(SETTINGS_PATH)) {
+    try {
+        settings = { ...settings, ...JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8')) };
+        console.log('[SYSTEM] Loaded custom settings from settings.json');
+    } catch (e) { console.error('[SYSTEM] Failed to parse settings.json, using defaults.'); }
+}
+
+const config = {
+    host: settings.REMOTE_PI_IP,
+    port: 22,
+    username: settings.SSH_USERNAME,
+    password: settings.SSH_PASSWORD
+};
+
+const UDP_PORT = settings.UDP_PORT;
 let gstProcess = null;
 let isShuttingDown = false;
 

@@ -1,8 +1,10 @@
-# Tartan Radio API Documentation
+# Tartan Radio API Documentation v2.1
 
 This document lists all the API endpoints and Socket.io events used in the Tartan Radio system.
 
-## Server API (Port 80)
+## Server API
+
+The default port is **80**, but it can be changed in `server/settings.json`.
 
 ### 1. File & Directory Management
 *   **GET `/api/files`**
@@ -24,10 +26,10 @@ This document lists all the API endpoints and Socket.io events used in the Tarta
 
 ### 2. Client Management
 *   **POST `/api/heartbeat`**
-    *   **Description:** Clients call this every 5 seconds to update their status.
+    *   **Description:** Clients call this every 5 seconds to update their status. Updates `last_ping`.
     *   **Body:** `{ "hostname": "string", "ip": "string", "current_song": "string", "volume": number, "status": "string", "version": "string" }`
 *   **GET `/api/clients`**
-    *   **Description:** Returns all known clients, their latest info, and calculated online status.
+    *   **Description:** Returns all known clients, their latest info, calculated `is_online` status, and `last_ping` timestamp.
 *   **POST `/api/clients/settings`**
     *   **Description:** Updates specific client settings.
     *   **Body:** `{ "hostname": "string", "songs_per_ad": number }`

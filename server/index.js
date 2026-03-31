@@ -4,7 +4,25 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+
+// Initialize file logging
+require('./logger')('server.log');
+
 const db = require('./database');
+
+// Load external settings
+let settings = {
+  PORT: 80,
+  MUSIC_DIRECTORY: 'music'
+};
+
+const SETTINGS_PATH = path.join(__dirname, 'settings.json');
+if (fs.existsSync(SETTINGS_PATH)) {
+  try {
+    settings = { ...settings, ...JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8')) };
+    console.log('[SYSTEM] Loaded custom settings from settings.json');
+  } catch (e) { console.error('[SYSTEM] Failed to parse settings.json, using defaults.'); }
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -18,10 +36,10 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/music', express.static(path.join(__dirname, 'music')));
+app.use('/' + settings.MUSIC_DIRECTORY, express.static(path.join(__dirname, settings.MUSIC_DIRECTORY)));
 
 // Ensure music directories exist
-const musicPath = path.join(__dirname, 'music');
+const musicPath = path.join(__dirname, settings.MUSIC_DIRECTORY);
 const playlistsPath = path.join(musicPath, 'playlists');
 const advertsPath = path.join(musicPath, 'adverts');
 
@@ -303,7 +321,7 @@ io.on('connection', (socket) => {
 });
 
 // --- Start Server ---
-const PORT = 80;
+const PORT = settings.PORT;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

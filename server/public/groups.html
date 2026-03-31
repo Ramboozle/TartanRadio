@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Groups Management - Tartan Radio</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
+            <div class="container">
+                <div class="navbar-brand">
+                    <a class="navbar-item" href="/">
+                        <img src="/DMK-logo.png" style="max-height: 40px; margin-right: 10px;">
+                        <strong>Tartan Radio</strong>
+                        <span class="tag is-info ml-2">v2.1</span>
+                    </a>
+                    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                    </a>
+                </div>
+                <div id="navbarMenu" class="navbar-menu">
+                    <div class="navbar-end">
+                        <a class="navbar-item" href="/">Home</a>
+                        <a class="navbar-item" href="/admin.html">Admin Controls</a>
+                        <a class="navbar-item" href="/playlists.html">Playlists</a>
+                        <a class="navbar-item" href="/reports.html">Song Reports</a>
+                        <a class="navbar-item" href="/groups.html">Groups</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mt-5">
+            <section class="section">
+                <div class="level mb-4">
+                    <div class="level-left">
+                        <h1 class="title mb-0">Groups Management</h1>
+                    </div>
+                    <div class="level-right">
+                        <div class="field has-addons">
+                            <div class="control">
+                                <input class="input is-small" type="text" v-model="newGroupName" placeholder="New Group Name">
+                            </div>
+                            <div class="control">
+                                <button class="button is-small is-link" @click="addGroup">Create Group</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="columns is-multiline">
+                    <div v-for="group in groups" :key="group.id" class="column is-4">
+                        <div class="box p-3" style="height: 100%; display: flex; flex-direction: column;">
+                            <div class="level is-mobile mb-2">
+                                <div class="level-left">
+                                    <h3 class="title is-6 mb-0">{{ group.name }}</h3>
+                                </div>
+                                <div class="level-right">
+                                    <button class="delete is-small" @click="deleteGroup(group.id)"></button>
+                                </div>
+                            </div>
+                            
+                            <div class="content is-small mb-2" style="flex-grow: 1;">
+                                <div class="tags mt-1">
+                                    <span v-for="member in group.members" :key="member" class="tag is-info is-light">
+                                        {{ member }}
+                                        <button class="delete is-small" @click="removeFromGroup(member)"></button>
+                                    </span>
+                                    <span v-if="!group.members || group.members.length === 0" class="is-italic has-text-grey">No members</span>
+                                </div>
+                            </div>
+
+                            <div class="field has-addons">
+                                <div class="control is-expanded">
+                                    <div class="select is-small is-fullwidth">
+                                        <select v-model="selectedClientForGroup[group.id]">
+                                            <option value="" disabled selected>Add Pi...</option>
+                                            <option v-for="pi in unassignedClients" :key="pi.hostname" :value="pi.hostname">
+                                                {{ pi.hostname }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="control">
+                                    <button class="button is-small is-link" @click="addToGroup(group.id)">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer class="footer-contact">
+            <div class="container">
+                <p><strong>Contact Support:</strong> Oliver Nield | <a href="mailto:oliver.nield@dmkeith.com">oliver.nield@dmkeith.com</a> | Extension: 2096</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() { 
+                return { 
+                    clients: [], 
+                    groups: [], 
+                    newGroupName: '',
+                    selectedClientForGroup: {}
+                } 
+            },
+            computed: {
+                unassignedClients() {
+                    return this.clients.filter(c => !c.group_id);
+                }
+            },
+            mounted() { 
+                this.refreshData();
+                setInterval(this.refreshData, 5000);
+            },
+            methods: {
+                async refreshData() {
+                    try {
+                        const [clientsRes, groupsRes] = await Promise.all([
+                            axios.get('/api/clients'),
+                            axios.get('/api/groups')
+                        ]);
+                        this.clients = clientsRes.data;
+                        this.groups = groupsRes.data;
+                        
+                        this.groups.forEach(g => {
+                            if (this.selectedClientForGroup[g.id] === undefined) {
+                                this.selectedClientForGroup[g.id] = '';
+                            }
+                        });
+                    } catch (e) { console.error('Refresh failed', e); }
+                },
+                async addGroup() {
+                    if (!this.newGroupName) return;
+                    await axios.post('/api/groups', { name: this.newGroupName });
+                    this.newGroupName = '';
+                    this.refreshData();
+                },
+                async deleteGroup(id) {
+                    if (!confirm('Are you sure you want to delete this group? All members will be unassigned.')) return;
+                    await axios.delete(`/api/groups/${id}`);
+                    this.refreshData();
+                },
+                async addToGroup(groupId) {
+                    const hostname = this.selectedClientForGroup[groupId];
+                    if (!hostname) return;
+                    await axios.post('/api/clients/assign-group', { hostname, group_id: groupId });
+                    this.selectedClientForGroup[groupId] = '';
+                    this.refreshData();
+                },
+                async removeFromGroup(hostname) {
+                    await axios.post('/api/clients/assign-group', { hostname, group_id: null });
+                    this.refreshData();
+                }
+            }
+        }).mount('#app');
+
+        // Burger menu toggle
+        document.addEventListener('DOMContentLoaded', () => {
+            const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+            $navbarBurgers.forEach( el => {
+                el.addEventListener('click', () => {
+                    const target = el.dataset.target;
+                    const $target = document.getElementById(target);
+                    el.classList.toggle('is-active');
+                    $target.classList.toggle('is-active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

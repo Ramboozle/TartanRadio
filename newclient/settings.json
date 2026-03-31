@@ -1,0 +1,7 @@
+{
+  "PORT": 3001,
+  "SERVER_URL": "http://music:80",
+  "SYNC_INTERVAL_MS": 3600000,
+  "HEARTBEAT_INTERVAL_MS": 5000,
+  "VERSION": "2.1"
+}

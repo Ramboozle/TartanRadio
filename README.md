@@ -1,4 +1,4 @@
-# Tartan Radio System v2.0
+# Tartan Radio System v2.1
 
 Welcome to the Tartan Radio project. This repository contains the source code for both the central management server and the Raspberry Pi/Windows audio clients.
 
