@@ -26,9 +26,6 @@ jobs:
           
           # Package the Listener
           zip -r dist/TartanRadio-Listener.zip listner/ -x "listner/node_modules/*" "listner/*.log" "listner/*.old"
-          
-          # Package the Documentation & Config Guide
-          zip -r dist/TartanRadio-Docs.zip Docs/ README.md CONFIGURATION.md
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -38,7 +35,6 @@ jobs:
             dist/TartanRadio-Server.zip
             dist/TartanRadio-Client.zip
             dist/TartanRadio-Listener.zip
-            dist/TartanRadio-Docs.zip
           draft: false
           prerelease: false
         env:
