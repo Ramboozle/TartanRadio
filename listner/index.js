@@ -1,16 +1,37 @@
+/**
+ * Tartan Radio - Remote Listener (Instant Stream)
+ * 
+ * This component is designed for ultra-low latency (<30ms) audio streaming 
+ * between two Raspberry Pis. It uses SSH to trigger a raw PCM audio capture 
+ * on a remote Pi and receives the stream via UDP using GStreamer.
+ * 
+ * Workflow:
+ * 1. Initialize local GStreamer pipeline to listen for raw audio bits on a UDP port.
+ * 2. Connect via SSH to the "Source Pi" (where the music is physically playing).
+ * 3. Execute 'arecord' on the remote Pi to capture live audio and pipe it 
+ *    directly to 'nc' (netcat) targeting this listener's IP and port.
+ */
+
 const { Client } = require('ssh2');
 const { spawn } = require('child_process');
 const os = require('os');
+const fs = require('fs');
+const path = require('path');
 
-// Initialize file logging
+/**
+ * LOGGER INITIALIZATION
+ * Captures all console output and redirects it to 'listener.log'.
+ * Includes 5MB rotation to protect SD card life on Raspberry Pis.
+ */
 require('./logger')('listener.log');
 
 /**
- * "The Instant Stream" - Ultra-Low Latency Raw PCM Listener.
- * Optimized for <30ms delay on Raspbian.
+ * CONFIGURATION & DEFAULTS
+ * Settings are loaded from 'settings.json'.
+ * - REMOTE_PI_IP: The address of the Pi providing the audio source.
+ * - SSH_USERNAME/PASSWORD: Credentials for the remote Pi.
+ * - UDP_PORT: The network port used for the raw audio transmission.
  */
-
-// Load external settings
 let settings = {
     REMOTE_PI_IP: '10.0.32.93',
     SSH_USERNAME: 'music',
@@ -21,9 +42,12 @@ let settings = {
 const SETTINGS_PATH = path.join(__dirname, 'settings.json');
 if (fs.existsSync(SETTINGS_PATH)) {
     try {
-        settings = { ...settings, ...JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8')) };
+        const fileContent = fs.readFileSync(SETTINGS_PATH, 'utf8');
+        settings = { ...settings, ...JSON.parse(fileContent) };
         console.log('[SYSTEM] Loaded custom settings from settings.json');
-    } catch (e) { console.error('[SYSTEM] Failed to parse settings.json, using defaults.'); }
+    } catch (e) { 
+        console.error('[SYSTEM] Failed to parse settings.json, using defaults.'); 
+    }
 }
 
 const config = {
@@ -37,6 +61,11 @@ const UDP_PORT = settings.UDP_PORT;
 let gstProcess = null;
 let isShuttingDown = false;
 
+/**
+ * getLocalIP()
+ * Determines the local IPv4 address of this listener Pi.
+ * This is sent to the remote Pi so it knows where to "shoot" the audio packets.
+ */
 function getLocalIP() {
     const interfaces = os.networkInterfaces();
     for (const name of Object.keys(interfaces)) {
@@ -51,17 +80,22 @@ function getLocalIP() {
 
 const LISTENER_IP = getLocalIP();
 
+/**
+ * startGStreamer()
+ * Spawns the local GStreamer process to decode and play the incoming stream.
+ * 
+ * Pipeline Explanation:
+ * - udpsrc: Listens for raw UDP packets.
+ * - caps: Explicitly defines the audio format (S16LE, 44.1kHz, Stereo).
+ * - rawaudioparse: Interprets the raw bitstream into audio frames.
+ * - alsasink: Direct output to the ALSA audio driver.
+ * - sync=false: Disables clock synchronization to prioritize speed over perfect timing.
+ */
 function startGStreamer() {
     if (gstProcess || isShuttingDown) return;
 
     console.log(`[LOCAL] Starting Raw PCM Listener on port ${UDP_PORT}...`);
     
-    /**
-     * GStreamer Pipeline:
-     * - udpsrc: We add "caps" to tell GStreamer exactly what the raw bits are.
-     * - rawaudioparse: Interprets the raw PCM stream.
-     * - alsasink: Direct hardware output.
-     */
     const gstArgs = [
         'udpsrc', `port=${UDP_PORT}`, 'caps=audio/x-raw,format=S16LE,rate=44100,channels=2,layout=interleaved',
         '!', 'rawaudioparse', 'format=pcm', 'pcm-format=s16le', 'sample-rate=44100', 'num-channels=2',
@@ -81,6 +115,11 @@ function startGStreamer() {
     });
 }
 
+/**
+ * connect()
+ * Manages the SSH connection to the remote source Pi.
+ * Once connected, it executes the 'arecord' command remotely to begin the stream.
+ */
 function connect() {
     if (isShuttingDown) return;
 
@@ -91,12 +130,12 @@ function connect() {
         console.log(`[SSH] Connected. Triggering Raw PCM stream...`);
         
         /**
-         * Optimized arecord flags:
-         * -f S16_LE: Raw 16-bit Little Endian (Fastest)
-         * -r 44100: CD quality
-         * -c 2: Stereo
-         * -B 10000: FORCE 10ms buffer time (Crucial for speed)
-         * -t raw: Don't add a WAV header
+         * REMOTE COMMAND:
+         * - arecord: Captures audio from the default input device (Loopback or Mic).
+         * - -f S16_LE: Raw 16-bit bits.
+         * - -B 150000: Sets a very small buffer to reduce transmission delay.
+         * - -t raw: Outputs a raw stream with no headers.
+         * - | nc -u: Pipes the raw audio into netcat to send it via UDP.
          */
         const streamCommand = `arecord -f S16_LE -r 44100 -c 2 -B 150000 -t raw | nc -u ${LISTENER_IP} ${UDP_PORT}`;
         
@@ -125,6 +164,7 @@ function connect() {
 
     conn.on('close', () => {
         if (!isShuttingDown) {
+            // Auto-reconnect if connection is lost
             setTimeout(connect, 2000);
         }
     });
@@ -132,12 +172,18 @@ function connect() {
     conn.connect(config);
 }
 
+// Startup
 console.log('--- Tartan Radio INSTANT STREAM (GStreamer + Raw PCM) ---');
 startGStreamer();
 connect();
 
+/**
+ * Shutdown Handler
+ * Ensures background processes are killed when the Node process exits.
+ */
 process.on('SIGINT', () => {
     isShuttingDown = true;
     if (gstProcess) gstProcess.kill();
     process.exit();
 });
+

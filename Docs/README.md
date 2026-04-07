@@ -41,6 +41,20 @@ node index.js
 ```
 The local control UI will be available at `http://client-ip:3001`.
 
+### 3. Remote Listener Setup (Optional)
+The listener requires `GStreamer` on the local machine and `alsa-utils` + `netcat` on the remote source Pi.
+```bash
+# For the Listener Pi (Receiver):
+sudo apt-get install gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-alsa
+cd listner
+npm install
+node index.js
+
+# For the Source Pi (Sender):
+sudo apt-get install alsa-utils netcat-openbsd
+```
+
+
 ---
 
 ## Configuration & Persistence
